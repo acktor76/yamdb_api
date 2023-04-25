@@ -1,4 +1,67 @@
+from django.contrib.auth.models import AbstractUser
 from django.db import models
+
+from .validators import validate_username
+
+
+class User(AbstractUser):
+    username = models.CharField(
+        'Имя пользователя',
+        max_length=150,
+        unique=True,
+        blank=False,
+        null=False,
+        validators=(validate_username,)
+    )
+    email = models.EmailField(
+        'Электронная почта',
+        max_length=254,
+        unique=True,
+        blank=False,
+        null=False
+    )
+    first_name = models.CharField(
+        'Имя',
+        max_length=150,
+        blank=True
+    )
+    last_name = models.CharField(
+        'Фамилия',
+        max_length=150,
+        blank=True
+    )
+    bio = models.TextField(
+        'О себе',
+        blank=True
+    )
+    role = models.CharField(
+        'Роль',
+        max_length=20,
+        choices=[('user', 'user'),
+                 ('moderator', 'moderator'),
+                 ('admin', 'admin')],
+        default='user',
+        blank=True
+    )
+
+    class Meta:
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
+
+    def __str__(self):
+        return self.username
+
+    @property
+    def is_admin(self):
+        return self.role == 'admin'
+
+    @property
+    def is_moderator(self):
+        return self.role == 'moderator'
+
+    @property
+    def is_user(self):
+        return self.role == 'user'
 
 
 class Category(models.Model):
