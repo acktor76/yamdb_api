@@ -1,5 +1,6 @@
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
+from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.views import APIView
@@ -9,9 +10,13 @@ from rest_framework.filters import SearchFilter
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from .serializers import UserSerializer, SignUpSerializer
-from .permissions import IsAdmin
-from reviews.models import User
+from .serializers import (
+    UserSerializer, SignUpSerializer, CategorySerializer, GenreSerializer,
+    TitleViewSerializer, TitleSerializer
+)
+from .permissions import IsAdmin, IsStaffOrReadOnly
+from .mixins import CDLViewSet
+from reviews.models import User, Category, Genre, Title
 from api_yamdb.settings import ADMIN_EMAIL
 
 
@@ -48,3 +53,33 @@ class SignUpView(APIView):
         user_email = user.email
         send_mail(email_subject, email_text, admin_email, user_email)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class CategoryViewSet(CDLViewSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    permission_classes = (IsStaffOrReadOnly,)
+    filter_backends = (SearchFilter,)
+    search_fields = ('name', 'slug')
+    lookup_field = 'slug'
+
+
+class GenreViewSet(CDLViewSet):
+    queryset = Genre.objects.all()
+    serializer_class = GenreSerializer
+    permission_classes = (IsStaffOrReadOnly,)
+    filter_backends = (SearchFilter,)
+    search_fields = ('name', 'slug')
+    lookup_field = 'slug'
+
+
+class TitleViewSet(ModelViewSet):
+    queryset = Title.objects.all()
+    permission_classes = (IsStaffOrReadOnly,)
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ('category', 'genre', 'name', 'year')
+
+    def get_serializer_class(self):
+        if self.action in ('retrieve', 'list'):
+            return TitleViewSerializer
+        return TitleSerializer
