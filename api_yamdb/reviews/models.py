@@ -4,6 +4,10 @@ from django.db import models
 from .validators import validate_username
 
 
+ROLE_CHOISES = (('user', 'Пользователь'), ('moderator', 'Модератор'),
+                ('admin', 'Администратор'))
+
+
 class User(AbstractUser):
     username = models.CharField(
         'Имя пользователя',
@@ -37,9 +41,7 @@ class User(AbstractUser):
     role = models.CharField(
         'Роль',
         max_length=20,
-        choices=[('user', 'user'),
-                 ('moderator', 'moderator'),
-                 ('admin', 'admin')],
+        choices=ROLE_CHOISES,
         default='user',
         blank=True
     )
