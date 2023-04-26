@@ -1,8 +1,10 @@
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
 from .validators import validate_username
 
+MAX_CHAR = 30
 
 ROLE_CHOISES = (('user', 'Пользователь'), ('moderator', 'Модератор'),
                 ('admin', 'Администратор'))
@@ -144,3 +146,56 @@ class GenreTitle(models.Model):
                 name='unique_constraint_title_genre'
             )
         ]
+
+
+class Review(models.Model):
+    author = models.ForeignKey(
+        User, related_name='reviews', on_delete=models.CASCADE,
+        verbose_name='Автор')
+    title = models.ForeignKey(
+        Title, related_name='reviews', on_delete=models.CASCADE,
+        verbose_name='Произведение'
+    )
+    text = models.TextField('Текст отзыва')
+    pub_date = models.DateTimeField(
+        'Дата публикации', auto_now_add=True,
+        db_index=True)
+    score = models.IntegerField(
+        'Оценка произведения',
+        validators=[
+            MinValueValidator(1, message='Оценка должна быть не меньше 1'),
+            MaxValueValidator(10, message='Оценка должна быть не больше 10')
+        ]
+    )
+
+    class Meta:
+        verbose_name = 'Отзыв'
+        verbose_name_plural = 'Отзывы'
+        ordering = ('-pub_date',)
+        constraints = [models.UniqueConstraint(
+            fields=('author', 'title'), name='unique review'
+        )
+        ]
+
+    def __str__(self):
+        return self.text[:MAX_CHAR]
+
+
+class Comment(models.Model):
+    author = models.ForeignKey(
+        User, related_name='comments', on_delete=models.CASCADE,
+        verbose_name='Автор')
+    review = models.ForeignKey(
+        Review, related_name='comments', on_delete=models.CASCADE,
+        verbose_name='Отзыв')
+    text = models.TextField('Текст комментария')
+    pub_date = models.DateTimeField(
+        'Дата публикации', auto_now_add=True, db_index=True)
+
+    class Meta:
+        verbose_name = 'Комментарий'
+        verbose_name_plural = 'Комментарии'
+        ordering = ('-pub_date',)
+
+    def __str__(self):
+        return self.text[:MAX_CHAR]
