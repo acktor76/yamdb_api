@@ -11,6 +11,7 @@ from rest_framework.filters import SearchFilter
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.pagination import LimitOffsetPagination
 
 from .serializers import (
     UserSerializer, SignUpSerializer, TokenSerializer, CategorySerializer,
@@ -108,6 +109,7 @@ class TitleViewSet(ModelViewSet):
 class ReviewViewSet(ModelViewSet):
     serializer_class = ReviewSerializer
     permission_classes = (IsStaffOrReadOnly,)
+    pagination_class = LimitOffsetPagination
 
     def get_title(self, title_id):
         return get_object_or_404(Title, id=self.kwargs.get('title_id'))
@@ -122,6 +124,7 @@ class ReviewViewSet(ModelViewSet):
 class CommentViewSet(ModelViewSet):
     serializer_class = CommentSerializer
     permission_classes = (IsStaffOrReadOnly,)
+    pagination_class = LimitOffsetPagination
 
     def get_title(self, title_id):
         return get_object_or_404(Title, id=self.kwargs.get('title_id'))
