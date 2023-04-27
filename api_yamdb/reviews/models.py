@@ -6,7 +6,7 @@ from .validators import validate_username
 
 MAX_CHAR = 30
 
-ROLE_CHOISES = (('user', 'Пользователь'), ('moderator', 'Модератор'),
+ROLE_CHOICES = (('user', 'Пользователь'), ('moderator', 'Модератор'),
                 ('admin', 'Администратор'))
 
 
@@ -43,7 +43,7 @@ class User(AbstractUser):
     role = models.CharField(
         'Роль',
         max_length=20,
-        choices=ROLE_CHOISES,
+        choices=ROLE_CHOICES,
         default='user',
         blank=True
     )

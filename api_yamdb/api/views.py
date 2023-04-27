@@ -102,3 +102,7 @@ class TitleViewSet(ModelViewSet):
         if self.action in ('retrieve', 'list'):
             return TitleViewSerializer
         return TitleSerializer
+
+
+class ReviewViewSet(ModelViewSet):
+    pass
