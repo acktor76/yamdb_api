@@ -1,6 +1,6 @@
 from django.db import models
 from rest_framework import serializers, validators
-from reviews.models import User, Category, Genre, Title
+from reviews.models import User, Category, Genre, Title, Review, Comment
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -76,3 +76,41 @@ class TitleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Title
         fields = ('id', 'name', 'year', 'description', 'genre', 'category')
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(
+        slug_field='username', read_only=True
+    )
+
+    class Meta:
+        exclude = ('title',)
+        read_only_fields = ('pub_date', 'id')
+        model = Review
+
+    def validate(self, attrs):
+        author = self.context.get('request').user
+        title = self.context.get('view').kwargs.get('title_id')
+        if (Review.objects.filter(author=author, title=title).exists()
+                and self.context.get('request').method == 'POST'):
+            raise serializers.ValidationError(
+                'Можно оставить только один отзыв на произведение'
+            )
+        return attrs
+
+    def validate_score(self, score):
+        if score < 1 or score > 10:
+            raise serializers.ValidationError(
+                'Оценка должна быть от 1 до 10'
+            )
+        return score
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(
+        slug_field='username', read_only=True)
+
+    class Meta:
+        exclude = ('review',)
+        read_only_fields = ('review', 'pub_date', 'id')
+        model = Comment

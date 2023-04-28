@@ -11,14 +11,16 @@ from rest_framework.filters import SearchFilter
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.pagination import LimitOffsetPagination
 
 from .serializers import (
     UserSerializer, SignUpSerializer, TokenSerializer, CategorySerializer,
-    GenreSerializer, TitleViewSerializer, TitleSerializer
+    GenreSerializer, TitleViewSerializer, TitleSerializer, ReviewSerializer,
+    CommentSerializer
 )
 from .permissions import IsAdmin, IsStaffOrReadOnly
 from .mixins import CDLViewSet
-from reviews.models import User, Category, Genre, Title
+from reviews.models import User, Category, Genre, Title, Review, Comment
 from api_yamdb.settings import ADMIN_EMAIL
 
 
@@ -102,3 +104,37 @@ class TitleViewSet(ModelViewSet):
         if self.action in ('retrieve', 'list'):
             return TitleViewSerializer
         return TitleSerializer
+
+
+class ReviewViewSet(ModelViewSet):
+    serializer_class = ReviewSerializer
+    permission_classes = (IsStaffOrReadOnly,)
+    pagination_class = LimitOffsetPagination
+
+    def get_title(self, title_id):
+        return get_object_or_404(Title, id=self.kwargs.get('title_id'))
+
+    def get_queryset(self):
+        return Review.objects.filter(title=self.get_title())
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user, title=self.get_title())
+
+
+class CommentViewSet(ModelViewSet):
+    serializer_class = CommentSerializer
+    permission_classes = (IsStaffOrReadOnly,)
+    pagination_class = LimitOffsetPagination
+
+    def get_title(self, title_id):
+        return get_object_or_404(Title, id=self.kwargs.get('title_id'))
+
+    def get_review(self, review_id):
+        return get_object_or_404(Review, id=self.kwargs.get('review_id'),
+                                 title=self.get_title())
+
+    def get_queryset(self):
+        return Comment.objects.filter(review=self.get_review())
+
+    def perform_create(self, serializer):
+        serializer.save(autor=self.request.user, review=self.get_review())
