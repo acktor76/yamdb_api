@@ -1,6 +1,7 @@
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 
 from rest_framework.viewsets import ModelViewSet
@@ -95,7 +96,7 @@ class GenreViewSet(CDLViewSet):
 
 
 class TitleViewSet(ModelViewSet):
-    queryset = Title.objects.all()
+    queryset = Title.objects.all().annotate(rating=Avg('reviews__score'))
     permission_classes = (IsStaffOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('category', 'genre', 'name', 'year')
