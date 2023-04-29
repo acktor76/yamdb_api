@@ -21,12 +21,13 @@ from .serializers import (
 )
 from .permissions import IsAdmin, IsStaffOrReadOnly
 from .mixins import CDLViewSet
+from .filters import TitleFilter
 from reviews.models import User, Category, Genre, Title, Review, Comment
 from api_yamdb.settings import ADMIN_EMAIL
 
 
 class UserViewSet(ModelViewSet):
-    queryset = User.objects.all()
+    queryset = User.objects.all().order_by('id')
     serializer_class = UserSerializer
     permission_classes = (IsAuthenticated, IsAdmin,)
     filter_backends = (SearchFilter,)
@@ -78,7 +79,7 @@ class GetTokenView(APIView):
 
 
 class CategoryViewSet(CDLViewSet):
-    queryset = Category.objects.all()
+    queryset = Category.objects.all().order_by('id')
     serializer_class = CategorySerializer
     permission_classes = (IsStaffOrReadOnly,)
     filter_backends = (SearchFilter,)
@@ -87,7 +88,7 @@ class CategoryViewSet(CDLViewSet):
 
 
 class GenreViewSet(CDLViewSet):
-    queryset = Genre.objects.all()
+    queryset = Genre.objects.all().order_by('id')
     serializer_class = GenreSerializer
     permission_classes = (IsStaffOrReadOnly,)
     filter_backends = (SearchFilter,)
@@ -96,10 +97,11 @@ class GenreViewSet(CDLViewSet):
 
 
 class TitleViewSet(ModelViewSet):
-    queryset = Title.objects.all().annotate(rating=Avg('reviews__score'))
+    queryset = Title.objects.all().order_by(
+        'id').annotate(rating=Avg('reviews__score'))
     permission_classes = (IsStaffOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('category', 'genre', 'name', 'year')
+    filterset_class = TitleFilter
 
     def get_serializer_class(self):
         if self.action in ('retrieve', 'list'):
