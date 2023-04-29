@@ -21,6 +21,7 @@ from .serializers import (
 )
 from .permissions import IsAdmin, IsStaffOrReadOnly
 from .mixins import CDLViewSet
+from .filters import TitleFilter
 from reviews.models import User, Category, Genre, Title, Review, Comment
 from api_yamdb.settings import ADMIN_EMAIL
 
@@ -100,7 +101,7 @@ class TitleViewSet(ModelViewSet):
         'id').annotate(rating=Avg('reviews__score'))
     permission_classes = (IsStaffOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('category', 'genre', 'name', 'year')
+    filterset_class = TitleFilter
 
     def get_serializer_class(self):
         if self.action in ('retrieve', 'list'):
