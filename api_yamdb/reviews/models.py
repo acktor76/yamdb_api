@@ -52,6 +52,11 @@ class User(AbstractUser):
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
 
+    def save(self, *args, **kwargs):
+        if self.role == 'admin':
+            self.is_staff = True
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.username
 
