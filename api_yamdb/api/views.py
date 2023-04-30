@@ -19,7 +19,7 @@ from .serializers import (
     GenreSerializer, TitleViewSerializer, TitleSerializer, ReviewSerializer,
     CommentSerializer
 )
-from .permissions import IsAdmin, IsStaffOrReadOnly
+from .permissions import IsAdmin, IsStaffOrReadOnly, IsAdminOrModeratorOrAuthor
 from .mixins import CDLViewSet
 from .filters import TitleFilter
 from reviews.models import User, Category, Genre, Title, Review, Comment
@@ -111,7 +111,7 @@ class TitleViewSet(ModelViewSet):
 
 class ReviewViewSet(ModelViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = (IsStaffOrReadOnly,)
+    permission_classes = (IsAdminOrModeratorOrAuthor,)
     pagination_class = LimitOffsetPagination
 
     def get_title(self):
@@ -126,7 +126,7 @@ class ReviewViewSet(ModelViewSet):
 
 class CommentViewSet(ModelViewSet):
     serializer_class = CommentSerializer
-    permission_classes = (IsStaffOrReadOnly,)
+    permission_classes = (IsAdminOrModeratorOrAuthor,)
     pagination_class = LimitOffsetPagination
 
     def get_title(self):
