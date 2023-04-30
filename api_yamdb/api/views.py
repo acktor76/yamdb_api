@@ -140,4 +140,4 @@ class CommentViewSet(ModelViewSet):
         return Comment.objects.filter(review=self.get_review())
 
     def perform_create(self, serializer):
-        serializer.save(autor=self.request.user, review=self.get_review())
+        serializer.save(author=self.request.user, review=self.get_review())
