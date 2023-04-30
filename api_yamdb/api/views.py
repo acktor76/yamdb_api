@@ -114,7 +114,7 @@ class ReviewViewSet(ModelViewSet):
     permission_classes = (IsStaffOrReadOnly,)
     pagination_class = LimitOffsetPagination
 
-    def get_title(self, title_id):
+    def get_title(self):
         return get_object_or_404(Title, id=self.kwargs.get('title_id'))
 
     def get_queryset(self):
@@ -129,10 +129,10 @@ class CommentViewSet(ModelViewSet):
     permission_classes = (IsStaffOrReadOnly,)
     pagination_class = LimitOffsetPagination
 
-    def get_title(self, title_id):
+    def get_title(self):
         return get_object_or_404(Title, id=self.kwargs.get('title_id'))
 
-    def get_review(self, review_id):
+    def get_review(self):
         return get_object_or_404(Review, id=self.kwargs.get('review_id'),
                                  title=self.get_title())
 
