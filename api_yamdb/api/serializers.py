@@ -1,4 +1,3 @@
-from django.db import models
 import re
 
 from rest_framework import serializers, validators
