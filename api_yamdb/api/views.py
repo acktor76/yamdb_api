@@ -27,6 +27,7 @@ from api_yamdb.settings import ADMIN_EMAIL
 
 
 class UserViewSet(ModelViewSet):
+    http_method_names = ['get', 'post', 'patch', 'delete']
     queryset = User.objects.all().order_by('id')
     serializer_class = UserSerializer
     permission_classes = (IsAuthenticated, IsAdmin,)
@@ -60,13 +61,12 @@ class SignUpView(APIView):
     permission_classes = (AllowAny,)
 
     def post(self, request):
-        user = User.objects.filter(**request.data)
-        if user.exists():
-            send_email(user)
-            return Response(request.data, status=status.HTTP_200_OK)
         serializer = SignUpSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = serializer.save()
+        user, create = User.objects.get_or_create(
+            username=serializer.validated_data['username'],
+            email=serializer.validated_data['email']
+        )
         send_email(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

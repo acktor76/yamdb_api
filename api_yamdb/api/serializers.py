@@ -1,4 +1,6 @@
 from django.db import models
+import re
+
 from rest_framework import serializers, validators
 
 from reviews.models import User, Category, Genre, Title, Review, Comment
@@ -14,6 +16,34 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class SignUpSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(
+        max_length=150,
+    )
+    email = serializers.EmailField(
+        max_length=254
+    )
+
+    def validate_username_or_email_exists(self, data):
+        email = data.get('email')
+        username = data.get('username')
+        if User.objects.filter(email=email).exists():
+            if User.objects.filter(username=username).exists():
+                return data
+            else:
+                raise serializers.ValidationError('Пользователь недоступен')
+        return data
+
+    def validate_username(self, value):
+        if value == 'me':
+            raise serializers.ValidationError(
+                'Нельзя использовать "me" в качестве имени'
+                'пользователя')
+        if re.search(r'^[a-zA-Z][a-zA-Z0-9-_\.]{1,20}$', value) is None:
+            raise serializers.ValidationError(
+                f'В username недопустимый символ {value}'
+            )
+        return value
+
     class Meta:
         model = User
         fields = ('username', 'email')
