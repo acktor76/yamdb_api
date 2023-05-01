@@ -3,6 +3,7 @@ from django.core.mail import send_mail
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
+from django.db import IntegrityError
 
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.views import APIView
@@ -27,9 +28,11 @@ from api_yamdb.settings import ADMIN_EMAIL
 
 
 class UserViewSet(ModelViewSet):
+    http_method_names = ['get', 'post', 'patch', 'delete']
     queryset = User.objects.all().order_by('id')
     serializer_class = UserSerializer
     permission_classes = (IsAuthenticated, IsAdmin,)
+    lookup_field = 'username'
     filter_backends = (SearchFilter,)
     search_fields = ('username',)
 
@@ -39,10 +42,20 @@ class UserViewSet(ModelViewSet):
         user = self.request.user
         if request.method == 'GET':
             serializer = UserSerializer(user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         serializer = UserSerializer(user, request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        serializer.save(role=user.role)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+def send_email(user):
+    confirmation_code = default_token_generator.make_token(user)
+    email_subject = 'Код для авторизации'
+    email_text = f'Ваш код для авторизации - {confirmation_code}'
+    admin_email = ADMIN_EMAIL
+    user_email = [user.email]
+    return send_mail(email_subject, email_text, admin_email, user_email)
 
 
 class SignUpView(APIView):
@@ -51,13 +64,15 @@ class SignUpView(APIView):
     def post(self, request):
         serializer = SignUpSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        confirmation_code = default_token_generator.make_token(user)
-        email_subject = 'Код для авторизации'
-        email_text = f'Ваш код для авторизации - {confirmation_code}'
-        admin_email = ADMIN_EMAIL
-        user_email = user.email
-        send_mail(email_subject, email_text, admin_email, user_email)
+        try:
+            user, create = User.objects.get_or_create(
+                username=serializer.validated_data['username'],
+                email=serializer.validated_data['email']
+            )
+        except IntegrityError:
+            return Response('username или email заняты',
+                            status=status.HTTP_400_BAD_REQUEST)
+        send_email(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
