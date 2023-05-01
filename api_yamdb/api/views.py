@@ -30,6 +30,7 @@ class UserViewSet(ModelViewSet):
     queryset = User.objects.all().order_by('id')
     serializer_class = UserSerializer
     permission_classes = (IsAuthenticated, IsAdmin,)
+    lookup_field = 'username'
     filter_backends = (SearchFilter,)
     search_fields = ('username',)
 
@@ -39,25 +40,34 @@ class UserViewSet(ModelViewSet):
         user = self.request.user
         if request.method == 'GET':
             serializer = UserSerializer(user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         serializer = UserSerializer(user, request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        serializer.save(role=user.role)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+def send_email(user):
+    confirmation_code = default_token_generator.make_token(user)
+    email_subject = 'Код для авторизации'
+    email_text = f'Ваш код для авторизации - {confirmation_code}'
+    admin_email = ADMIN_EMAIL
+    user_email = [user.email]
+    return send_mail(email_subject, email_text, admin_email, user_email)
 
 
 class SignUpView(APIView):
     permission_classes = (AllowAny,)
 
     def post(self, request):
+        user = User.objects.filter(**request.data)
+        if user.exists():
+            send_email(user)
+            return Response(request.data, status=status.HTTP_200_OK)
         serializer = SignUpSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        confirmation_code = default_token_generator.make_token(user)
-        email_subject = 'Код для авторизации'
-        email_text = f'Ваш код для авторизации - {confirmation_code}'
-        admin_email = ADMIN_EMAIL
-        user_email = user.email
-        send_mail(email_subject, email_text, admin_email, user_email)
+        send_email(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
