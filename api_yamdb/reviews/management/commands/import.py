@@ -6,8 +6,6 @@ from django.apps import apps
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 
-from reviews.models import User
-
 
 def get_field_value(model, field, value):
     """Получение значение поля в зависимости от его типа."""
