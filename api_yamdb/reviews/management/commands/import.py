@@ -13,7 +13,7 @@ def get_field_value(model, field, value):
     """Получение значение поля в зависимости от его типа."""
 
     field_object = model._meta.get_field(field)
-    if field_object.related_model is User:
+    if field_object.related_model:
         return field_object.related_model.objects.get(pk=value)
     if field_object.is_relation:
         return int(value)
