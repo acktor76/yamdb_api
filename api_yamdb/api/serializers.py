@@ -23,16 +23,6 @@ class SignUpSerializer(serializers.ModelSerializer):
         max_length=254
     )
 
-    def validate_username_or_email_exists(self, data):
-        email = data.get('email')
-        username = data.get('username')
-        if User.objects.filter(email=email).exists():
-            if User.objects.filter(username=username).exists():
-                return data
-            else:
-                raise serializers.ValidationError('Пользователь недоступен')
-        return data
-
     def validate_username(self, value):
         if value == 'me':
             raise serializers.ValidationError(
