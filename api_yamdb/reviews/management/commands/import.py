@@ -46,7 +46,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('-m', '--model', required=True,
                             help='имя модели, необходимо')
-        parser.add_argument('-a', '--app',  required=True,
+        parser.add_argument('-a', '--app', required=True,
                             help='имя приложения, необходимо')
         parser.add_argument('-f', '--file', required=True,
                             help='имя файла для импорта, необходимо')
