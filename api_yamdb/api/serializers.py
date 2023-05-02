@@ -1,4 +1,3 @@
-from django.db import models
 import re
 
 from rest_framework import serializers, validators
@@ -49,7 +48,7 @@ class TokenSerializer(serializers.ModelSerializer):
 
 
 class CategorySerializer(serializers.ModelSerializer):
-    slug = models.fields.SlugField(
+    slug = serializers.SlugField(
         max_length=50,
         validators=[
             validators.UniqueValidator(
@@ -64,7 +63,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class GenreSerializer(serializers.ModelSerializer):
-    slug = models.fields.SlugField(
+    slug = serializers.SlugField(
         max_length=50,
         validators=[
             validators.UniqueValidator(
@@ -97,7 +96,7 @@ class TitleSerializer(serializers.ModelSerializer):
     genre = serializers.SlugRelatedField(
         slug_field='slug', queryset=Genre.objects.all(), many=True,
     )
-    name = models.fields.CharField(max_length=256)
+    name = serializers.CharField(max_length=256)
 
     class Meta:
         model = Title
