@@ -168,7 +168,7 @@ class Review(models.Model):
     pub_date = models.DateTimeField(
         'Дата публикации', auto_now_add=True,
         db_index=True)
-    score = models.IntegerField(
+    score = models.PositiveSmallIntegerField(
         'Оценка произведения',
         validators=[
             MinValueValidator(1, message='Оценка должна быть не меньше 1'),

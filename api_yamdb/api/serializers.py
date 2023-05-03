@@ -4,6 +4,9 @@ from rest_framework import serializers, validators
 
 from reviews.models import User, Category, Genre, Title, Review, Comment
 
+MIN_SCORE = 1
+MAX_SCORE = 10
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -124,7 +127,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         return attrs
 
     def validate_score(self, score):
-        if score < 1 or score > 10:
+        if score < MIN_SCORE or score > MAX_SCORE:
             raise serializers.ValidationError(
                 'Оценка должна быть от 1 до 10'
             )
