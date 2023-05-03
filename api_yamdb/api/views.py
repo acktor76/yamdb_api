@@ -4,6 +4,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django.db import IntegrityError
+from django.http import Http404
 
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.views import APIView
@@ -64,13 +65,21 @@ class SignUpView(APIView):
     def post(self, request):
         serializer = SignUpSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        username = serializer.validated_data['username']
+        email = serializer.validated_data['email']
         try:
             user, create = User.objects.get_or_create(
-                username=serializer.validated_data['username'],
-                email=serializer.validated_data['email']
+                username=username,
+                email=email
             )
         except IntegrityError:
-            return Response('username или email заняты',
+            error = {}
+            if User.objects.filter(email=email).exists():
+                error['email'] = 'Пользователь с такой почтой уже существует'
+            if User.objects.filter(username=username).exists():
+                error['username'] = (
+                    'Пользователь с таким именем уже существует')
+            return Response(error,
                             status=status.HTTP_400_BAD_REQUEST)
         send_email(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -81,11 +90,16 @@ class GetTokenView(APIView):
         serializer = TokenSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         username = serializer.data['username']
-        user = get_object_or_404(User, username=username)
+        try:
+            user = get_object_or_404(User, username=username)
+        except Http404:
+            return Response({'username': 'Неверное имя пользователя'},
+                            status=status.HTTP_404_NOT_FOUND)
         confirmation_code = serializer.data['confirmation_code']
         if not default_token_generator.check_token(user, confirmation_code):
-            return Response(serializer.errors,
-                            status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'confirmation_code': 'Неверный код подтверждения'},
+                status=status.HTTP_400_BAD_REQUEST)
         token = RefreshToken.for_user(user)
         return Response(
             {'token': str(token.access_token)},
