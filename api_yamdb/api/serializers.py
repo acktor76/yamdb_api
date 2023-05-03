@@ -1,8 +1,7 @@
-import re
-
 from rest_framework import serializers, validators
 
 from reviews.models import User, Category, Genre, Title, Review, Comment
+from reviews.validators import validate_username
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -23,14 +22,7 @@ class SignUpSerializer(serializers.ModelSerializer):
     )
 
     def validate_username(self, value):
-        if value == 'me':
-            raise serializers.ValidationError(
-                'Нельзя использовать "me" в качестве имени'
-                'пользователя')
-        if re.search(r'^[a-zA-Z][a-zA-Z0-9-_\.]{1,20}$', value) is None:
-            raise serializers.ValidationError(
-                f'В username недопустимый символ {value}'
-            )
+        validate_username(value)
         return value
 
     class Meta:
