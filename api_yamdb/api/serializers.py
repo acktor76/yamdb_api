@@ -1,9 +1,7 @@
-import re
-
 from django.conf import settings
 from rest_framework import serializers, validators
 
-from reviews.models import (User, Category, Genre, Title, Review, Comment)
+from reviews.models import User, Category, Genre, Title, Review, Comment
 from reviews.validators import validate_username
 
 MIN_SCORE = 1

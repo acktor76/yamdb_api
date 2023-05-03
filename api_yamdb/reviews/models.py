@@ -8,8 +8,11 @@ from .validators import validate_username
 
 MAX_CHAR = 30
 
-ROLE_CHOICES = (('user', 'Пользователь'), ('moderator', 'Модератор'),
-                ('admin', 'Администратор'))
+USER = 'user'
+MODERATOR = 'moderator'
+ADMIN = 'admin'
+ROLE_CHOICES = ((USER, 'Пользователь'), (MODERATOR, 'Модератор'),
+                (ADMIN, 'Администратор'))
 
 
 class User(AbstractUser):
@@ -17,16 +20,12 @@ class User(AbstractUser):
         'Имя пользователя',
         max_length=150,
         unique=True,
-        blank=False,
-        null=False,
         validators=(validate_username,)
     )
     email = models.EmailField(
         'Электронная почта',
         max_length=254,
         unique=True,
-        blank=False,
-        null=False
     )
     first_name = models.CharField(
         'Имя',
@@ -46,7 +45,7 @@ class User(AbstractUser):
         'Роль',
         max_length=20,
         choices=ROLE_CHOICES,
-        default='user',
+        default=USER,
         blank=True
     )
 
@@ -55,7 +54,7 @@ class User(AbstractUser):
         verbose_name_plural = 'Пользователи'
 
     def save(self, *args, **kwargs):
-        if self.role == 'admin':
+        if self.role == ADMIN:
             self.is_staff = True
         super().save(*args, **kwargs)
 
@@ -64,15 +63,15 @@ class User(AbstractUser):
 
     @property
     def is_admin(self):
-        return self.role == 'admin'
+        return self.role == ADMIN or self.is_superuser
 
     @property
     def is_moderator(self):
-        return self.role == 'moderator'
+        return self.role == MODERATOR
 
     @property
     def is_user(self):
-        return self.role == 'user'
+        return self.role == USER
 
 
 class Category(models.Model):
