@@ -1,4 +1,6 @@
+from datetime import datetime
 from django.conf import settings
+
 from rest_framework import serializers, validators
 
 from reviews.models import User, Category, Genre, Title, Review, Comment
@@ -87,7 +89,10 @@ class GenreSerializer(serializers.ModelSerializer):
 class TitleViewSerializer(serializers.ModelSerializer):
     category = CategorySerializer()
     genre = GenreSerializer(many=True)
-    rating = serializers.IntegerField()
+    rating = serializers.SerializerMethodField()
+
+    def get_rating(self, obj):
+        return obj.get_rating()
 
     class Meta:
         model = Title
@@ -104,10 +109,24 @@ class TitleSerializer(serializers.ModelSerializer):
         slug_field='slug', queryset=Genre.objects.all(), many=True,
     )
     name = serializers.CharField(max_length=256)
+    year = serializers.IntegerField(max_value=datetime.now().year, min_value=0)
+
+    def validate_genre(self, data):
+        if len(data) == 0:
+            raise serializers.ValidationError("Не указан жанр")
+        return data
 
     class Meta:
         model = Title
         fields = ('id', 'name', 'year', 'description', 'genre', 'category')
+
+
+class TitleUpdateSerializer(TitleSerializer):
+    def validate(self, data):
+        if 'genre' in data:
+            if len(data['genre']) == 0:
+                raise serializers.ValidationError("Не указан жанр")
+        return data
 
 
 class ReviewSerializer(serializers.ModelSerializer):
