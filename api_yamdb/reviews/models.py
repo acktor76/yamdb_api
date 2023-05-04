@@ -1,6 +1,8 @@
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
+from django.conf import settings
 
 from .validators import validate_username
 
@@ -167,7 +169,7 @@ class Review(models.Model):
     pub_date = models.DateTimeField(
         'Дата публикации', auto_now_add=True,
         db_index=True)
-    score = models.IntegerField(
+    score = models.PositiveSmallIntegerField(
         'Оценка произведения',
         validators=[
             MinValueValidator(1, message='Оценка должна быть не меньше 1'),
@@ -183,6 +185,20 @@ class Review(models.Model):
             fields=('author', 'title'), name='unique review'
         )
         ]
+
+    def clean_fields(self, exclude=('title', 'score', 'author', 'pub_date')):
+        with open(
+                f'{settings.BASE_DIR}/static/data/censored.txt', 'r'
+        ) as file:
+            for word in file.readlines():
+                if word.strip() in self.text:
+                    raise ValidationError(
+                        f'Цензура!!! Замените слово <{word.strip()}>'
+                    )
+
+    def save(self, *args, **kwargs):
+        self.clean_fields()
+        super(Review, self).save(*args, **kwargs)
 
     def __str__(self):
         return self.text[:MAX_CHAR]
@@ -203,6 +219,20 @@ class Comment(models.Model):
         verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'
         ordering = ('-pub_date',)
+
+    def clean_fields(self, exclude=('author', 'review', 'pub_date')):
+        with open(
+                f'{settings.BASE_DIR}/static/data/censored.txt', 'r'
+        ) as file:
+            for word in file.readlines():
+                if word.strip() in self.text:
+                    raise ValidationError(
+                        f'Цензура!!! Замените слово <{word.strip()}>'
+                    )
+
+    def save(self, *args, **kwargs):
+        self.clean_fields()
+        super(Comment, self).save(*args, **kwargs)
 
     def __str__(self):
         return self.text[:MAX_CHAR]

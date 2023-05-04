@@ -1,7 +1,22 @@
+from django.conf import settings
 from rest_framework import serializers, validators
 
 from reviews.models import User, Category, Genre, Title, Review, Comment
 from reviews.validators import validate_username
+
+MIN_SCORE = 1
+MAX_SCORE = 10
+
+
+def get_censored(text):
+    with open(
+            f'{settings.BASE_DIR}/static/data/censored.txt', 'r'
+    ) as file:
+        for word in file.readlines():
+            if word.strip() in text:
+                raise serializers.ValidationError(
+                    f'Цензура!!! Замените слово <{word.strip()}>'
+                )
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -116,11 +131,15 @@ class ReviewSerializer(serializers.ModelSerializer):
         return attrs
 
     def validate_score(self, score):
-        if score < 1 or score > 10:
+        if score < MIN_SCORE or score > MAX_SCORE:
             raise serializers.ValidationError(
                 'Оценка должна быть от 1 до 10'
             )
         return score
+
+    def validate_text(self, text):
+        get_censored(text)
+        return text
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -131,3 +150,7 @@ class CommentSerializer(serializers.ModelSerializer):
         exclude = ('review',)
         read_only_fields = ('review', 'pub_date', 'id')
         model = Comment
+
+    def validate_text(self, text):
+        get_censored(text)
+        return text
