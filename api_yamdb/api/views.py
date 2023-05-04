@@ -1,7 +1,6 @@
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django_filters.rest_framework import DjangoFilterBackend
-from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django.db import IntegrityError
 from django.http import Http404
@@ -19,9 +18,9 @@ from rest_framework.pagination import LimitOffsetPagination
 from .serializers import (
     UserSerializer, SignUpSerializer, TokenSerializer, CategorySerializer,
     GenreSerializer, TitleViewSerializer, TitleSerializer, ReviewSerializer,
-    CommentSerializer
+    CommentSerializer, TitleUpdateSerializer
 )
-from .permissions import IsStaffOrReadOnly, IsAdminOrModeratorOrAuthor
+from .permissions import IsAdminOrModeratorOrAuthor, IsAdminOrReadOnly
 from .mixins import CDLViewSet
 from .filters import TitleFilter
 from reviews.models import User, Category, Genre, Title, Review, Comment
@@ -110,7 +109,7 @@ class GetTokenView(APIView):
 class CategoryViewSet(CDLViewSet):
     queryset = Category.objects.all().order_by('id')
     serializer_class = CategorySerializer
-    permission_classes = (IsStaffOrReadOnly,)
+    permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (SearchFilter,)
     search_fields = ('name', 'slug')
     lookup_field = 'slug'
@@ -119,23 +118,45 @@ class CategoryViewSet(CDLViewSet):
 class GenreViewSet(CDLViewSet):
     queryset = Genre.objects.all().order_by('id')
     serializer_class = GenreSerializer
-    permission_classes = (IsStaffOrReadOnly,)
+    permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (SearchFilter,)
     search_fields = ('name', 'slug')
     lookup_field = 'slug'
 
 
 class TitleViewSet(ModelViewSet):
-    queryset = Title.objects.all().order_by(
-        'id').annotate(rating=Avg('reviews__score'))
-    permission_classes = (IsStaffOrReadOnly,)
+    queryset = Title.objects.all().order_by('id')
+    permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
 
     def get_serializer_class(self):
         if self.action in ('retrieve', 'list'):
             return TitleViewSerializer
+        if self.action == 'partial_update':
+            return TitleUpdateSerializer
         return TitleSerializer
+
+    def perform_create(self, serializer):
+        return serializer.save()
+
+    def perform_update(self, serializer):
+        return serializer.save()
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = self.perform_create(serializer)
+        result = TitleViewSerializer(instance)
+        return Response(result.data, status=status.HTTP_201_CREATED)
+
+    def update(self, request, *args, **kwargs):
+        serializer = self.get_serializer(
+            self.get_object(), data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        instance = self.perform_update(serializer)
+        result = TitleViewSerializer(instance)
+        return Response(result.data, status=status.HTTP_200_OK)
 
 
 class ReviewViewSet(ModelViewSet):

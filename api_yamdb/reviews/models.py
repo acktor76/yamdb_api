@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
@@ -110,18 +111,27 @@ class Title(models.Model):
     )
     year = models.PositiveSmallIntegerField(
         'Год выпуска',
+        validators=[
+            MinValueValidator(0, message='Год выпуска должен быть больше 0'),
+            MaxValueValidator(
+                datetime.now().year,
+                message='Год выпуска должен быть не больше текущего'
+            )
+        ]
     )
     description = models.TextField(
-        'Описание', blank=True, null=True, default=''
+        'Описание', blank=True,
     )
     category = models.ForeignKey(
         Category, related_name="titles", verbose_name='Категория',
         blank=True, null=True, on_delete=models.SET_NULL
     )
     genre = models.ManyToManyField(
-        Genre, through='GenreTitle', verbose_name='Жанры',
-        blank=True
+        Genre, through='GenreTitle', verbose_name='Жанры', blank=True
     )
+
+    def get_rating(self):
+        return self.reviews.aggregate(models.Avg('score'))['score__avg']
 
     class Meta:
         verbose_name = 'Произведение'
