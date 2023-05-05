@@ -7,6 +7,18 @@ from django.conf import settings
 
 from .validators import validate_username
 
+
+def get_censored(text):
+    with open(
+            f'{settings.BASE_DIR}/static/data/censored.txt', 'r'
+    ) as file:
+        for word in file.readlines():
+            if word.strip() in text:
+                raise ValidationError(
+                    f'Цензура!!! Замените слово <{word.strip()}>'
+                )
+
+
 MAX_CHAR = 30
 
 USER = 'user'
@@ -196,14 +208,7 @@ class Review(models.Model):
         ]
 
     def clean_fields(self, exclude=('title', 'score', 'author', 'pub_date')):
-        with open(
-                f'{settings.BASE_DIR}/static/data/censored.txt', 'r'
-        ) as file:
-            for word in file.readlines():
-                if word.strip() in self.text:
-                    raise ValidationError(
-                        f'Цензура!!! Замените слово <{word.strip()}>'
-                    )
+        get_censored(self.text)
 
     def save(self, *args, **kwargs):
         self.clean_fields()
@@ -230,14 +235,7 @@ class Comment(models.Model):
         ordering = ('-pub_date',)
 
     def clean_fields(self, exclude=('author', 'review', 'pub_date')):
-        with open(
-                f'{settings.BASE_DIR}/static/data/censored.txt', 'r'
-        ) as file:
-            for word in file.readlines():
-                if word.strip() in self.text:
-                    raise ValidationError(
-                        f'Цензура!!! Замените слово <{word.strip()}>'
-                    )
+        get_censored(self.text)
 
     def save(self, *args, **kwargs):
         self.clean_fields()
