@@ -1,24 +1,13 @@
 from datetime import datetime
-from django.conf import settings
 
 from rest_framework import serializers, validators
 
-from reviews.models import User, Category, Genre, Title, Review, Comment
+from reviews.models import (User, Category, Genre, Title, Review, Comment,
+                            get_censored)
 from reviews.validators import validate_username
 
 MIN_SCORE = 1
 MAX_SCORE = 10
-
-
-def get_censored(text):
-    with open(
-            f'{settings.BASE_DIR}/static/data/censored.txt', 'r'
-    ) as file:
-        for word in file.readlines():
-            if word.strip() in text:
-                raise serializers.ValidationError(
-                    f'Цензура!!! Замените слово <{word.strip()}>'
-                )
 
 
 class UserSerializer(serializers.ModelSerializer):
