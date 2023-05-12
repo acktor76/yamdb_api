@@ -35,31 +35,13 @@ class User(AbstractUser):
         unique=True,
         validators=(validate_username,)
     )
-    email = models.EmailField(
-        'Электронная почта',
-        max_length=254,
-        unique=True,
-    )
-    first_name = models.CharField(
-        'Имя',
-        max_length=150,
-        blank=True
-    )
-    last_name = models.CharField(
-        'Фамилия',
-        max_length=150,
-        blank=True
-    )
-    bio = models.TextField(
-        'О себе',
-        blank=True
-    )
-    role = models.CharField(
-        'Роль',
-        max_length=20,
-        choices=ROLE_CHOICES,
-        default=USER,
-    )
+    email = models.EmailField('Электронная почта', max_length=254, unique=True,
+                              )
+    first_name = models.CharField('Имя', max_length=150, blank=True)
+    last_name = models.CharField('Фамилия', max_length=150, blank=True)
+    bio = models.TextField('О себе', blank=True)
+    role = models.CharField('Роль', max_length=20, choices=ROLE_CHOICES,
+                            default=USER, )
 
     class Meta:
         verbose_name = 'Пользователь'
@@ -88,11 +70,8 @@ class User(AbstractUser):
 
 class Category(models.Model):
     name = models.CharField(
-        'Наименование категории', max_length=256, unique=True
-    )
-    slug = models.SlugField(
-        'Slug категории', max_length=50, unique=True
-    )
+        'Наименование категории', max_length=256, unique=True)
+    slug = models.SlugField('Slug категории', max_length=50, unique=True)
 
     class Meta:
         verbose_name = 'Категория'
@@ -106,9 +85,7 @@ class Genre(models.Model):
     name = models.CharField(
         'Наименование жанра', max_length=256, unique=True
     )
-    slug = models.SlugField(
-        'Slug жанра', max_length=50, unique=True
-    )
+    slug = models.SlugField('Slug жанра', max_length=50, unique=True)
 
     class Meta:
         verbose_name = 'Жанр'
@@ -119,9 +96,7 @@ class Genre(models.Model):
 
 
 class Title(models.Model):
-    name = models.CharField(
-        'Название', max_length=256
-    )
+    name = models.CharField('Название', max_length=256)
     year = models.PositiveSmallIntegerField(
         'Год выпуска',
         validators=[
@@ -132,16 +107,12 @@ class Title(models.Model):
             )
         ]
     )
-    description = models.TextField(
-        'Описание', blank=True,
-    )
+    description = models.TextField('Описание', blank=True)
     category = models.ForeignKey(
         Category, related_name="titles", verbose_name='Категория',
-        blank=True, null=True, on_delete=models.SET_NULL
-    )
+        blank=True, null=True, on_delete=models.SET_NULL)
     genre = models.ManyToManyField(
-        Genre, through='GenreTitle', verbose_name='Жанры', blank=True
-    )
+        Genre, through='GenreTitle', verbose_name='Жанры', blank=True)
 
     def get_rating(self):
         return self.reviews.aggregate(models.Avg('score'))['score__avg']
@@ -157,21 +128,17 @@ class Title(models.Model):
 class GenreTitle(models.Model):
     title = models.ForeignKey(
         Title, on_delete=models.CASCADE, related_name="title",
-        verbose_name='Произведение'
-    )
+        verbose_name='Произведение')
     genre = models.ForeignKey(
         Genre, on_delete=models.CASCADE, related_name="genre",
-        verbose_name='Жанр'
-    )
+        verbose_name='Жанр')
 
     class Meta:
         verbose_name = 'Жанр произведения'
         verbose_name_plural = 'Жанры произведений'
-        constraints = [
-            models.UniqueConstraint(
-                fields=['title', 'genre'],
-                name='unique_constraint_title_genre'
-            )
+        constraints = [models.UniqueConstraint(
+            fields=['title', 'genre'],
+            name='unique_constraint_title_genre')
         ]
 
     def __str__(self):
@@ -188,8 +155,7 @@ class Review(models.Model):
     )
     text = models.TextField('Текст отзыва')
     pub_date = models.DateTimeField(
-        'Дата публикации', auto_now_add=True,
-        db_index=True)
+        'Дата публикации', auto_now_add=True, db_index=True)
     score = models.PositiveSmallIntegerField(
         'Оценка произведения',
         validators=[
